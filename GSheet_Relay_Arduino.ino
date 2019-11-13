@@ -19,13 +19,14 @@ String relayStatus;
 String url;
 float moisture_percentage;
 int sensor_analog;
+int systemStarted = millis();
  
 void setup() {
   Serial.begin(9600);
   WiFi.mode(WIFI_STA);
-  wifiMulti.addAP("nvtestwireless", "Sp33doflight");
-//  wifiMulti.addAP("T2", "");
-//  wifiMulti.addAP("T3", "");
+  wifiMulti.addAP("", "");
+  wifiMulti.addAP("", "");
+  wifiMulti.addAP("", "");
   
   pinMode(Relay, OUTPUT);
   pinMode(SMSensor, INPUT);
@@ -48,8 +49,7 @@ void loop() {
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
 
   if (moisture_percentage > 96){
-    relayStatus = "Sensor Failure";
-    url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
+    url = String("/macros/s/") + GScriptId + "/exec?tmp=0&status=Sensor_Failure";
     while (!client.connected())           
       client.connect(host, httpsPort);
     client.printRedir(url, host, googleRedirHost);      
@@ -71,16 +71,16 @@ void loop() {
   digitalWrite (Relay, HIGH);
 
   int motorStart = millis();
-  while (moisture_percentage < 42){
+  int motorElapsed = millis() - motorStart;
+  while ((moisture_percentage < 42) and (motorElapsed <= 6*60000UL)){
     delay(2*30000UL);
     sensor_analog = analogRead(SMSensor);
     moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
     Serial.print( "Moisture % with Relay ON : " );
     Serial.println( moisture_percentage );
-    int motorElapsed = millis() - motorStart;
-    if (motorElapsed >= 6*60000UL){
-      moisture_percentage = 80;
-    }
+    motorElapsed = millis() - motorStart;
+    Serial.print( "motorOnfor : " );
+    Serial.println(motorElapsed);
   }
 
   relayStatus = "OFF";
@@ -89,4 +89,14 @@ void loop() {
     client.connect(host, httpsPort);
   client.printRedir(url, host, googleRedirHost);      
   digitalWrite (Relay, LOW);
+  delay(5000);
+
+  int systemElapsed = millis() - systemStarted;
+  if (systemElapsed >= 30*60000UL){
+    url = String("/macros/s/") + GScriptId + "/exec?status=Restart" + "&tmp=" + moisture_percentage;
+    while (!client.connected())           
+      client.connect(host, httpsPort);
+    client.printRedir(url, host, googleRedirHost);      
+    ESP.restart();
+  }
 }
