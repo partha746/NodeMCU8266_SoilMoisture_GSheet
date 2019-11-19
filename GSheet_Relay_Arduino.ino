@@ -2,15 +2,16 @@
 #include "HTTPSRedirect.h"
 #include <ESP8266WiFiMulti.h>
 #include <WiFiUdp.h>
+#include <NTPClient.h>
 
 #define SMSensor A0
 #define Relay D1
 
 const long utcOffsetInSeconds = 19800;
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
-
 ESP8266WiFiMulti wifiMulti;
+
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
@@ -29,7 +30,7 @@ int systemStarted = millis();
 void setup() {
   Serial.begin(9600);
   WiFi.mode(WIFI_STA);
-  wifiMulti.addAP("", "");
+
   wifiMulti.addAP("", "");
   wifiMulti.addAP("", "");
   
@@ -45,12 +46,12 @@ void setup() {
   Serial.println("");
   Serial.println("WiFi connected with IP address: ");
   Serial.println(WiFi.localIP());
- 
-  timeClient.begin();
 }
 
 void loop() {
   HTTPSRedirect client(httpsPort);
+  timeClient.begin();
+
   client.setInsecure();
   sensor_analog = analogRead(SMSensor);
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
