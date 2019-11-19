@@ -1,9 +1,14 @@
 #include <ESP8266WiFi.h>
 #include "HTTPSRedirect.h"
 #include <ESP8266WiFiMulti.h>
+#include <WiFiUdp.h>
 
 #define SMSensor A0
 #define Relay D1
+
+const long utcOffsetInSeconds = 19800;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 ESP8266WiFiMulti wifiMulti;
 
@@ -40,6 +45,8 @@ void setup() {
   Serial.println("");
   Serial.println("WiFi connected with IP address: ");
   Serial.println(WiFi.localIP());
+ 
+  timeClient.begin();
 }
 
 void loop() {
@@ -54,7 +61,7 @@ void loop() {
       client.connect(host, httpsPort);
     client.printRedir(url, host, googleRedirHost);      
   }
-
+ 
   while (moisture_percentage >= 42){
     delay(8*30000UL);
     sensor_analog = analogRead(SMSensor);
@@ -63,37 +70,40 @@ void loop() {
     Serial.println( moisture_percentage );
   }
 
-  relayStatus = "ON";
-  url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
-  while (!client.connected())           
-    client.connect(host, httpsPort);
-  client.printRedir(url, host, googleRedirHost);      
-  digitalWrite (Relay, HIGH);
+  timeClient.update();
+  if (timeClient.getHours() < 16 &&  timeClient.getHours() > 4){
+     relayStatus = "ON";
+     url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
+     while (!client.connected())           
+       client.connect(host, httpsPort);
+     client.printRedir(url, host, googleRedirHost);      
+     digitalWrite (Relay, HIGH);
 
-  int motorStart = millis();
-  int motorElapsed = millis() - motorStart;
-  while ((moisture_percentage < 42) and (motorElapsed <= 6*60000UL)){
-    delay(2*30000UL);
-    sensor_analog = analogRead(SMSensor);
-    moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-    Serial.print( "Moisture % with Relay ON : " );
-    Serial.println( moisture_percentage );
-    motorElapsed = millis() - motorStart;
-    Serial.print( "motorOnfor : " );
-    Serial.println(motorElapsed);
+     int motorStart = millis();
+     int motorElapsed = millis() - motorStart;
+     while ((moisture_percentage < 42) and (motorElapsed <= 6*60000UL)){
+       delay(2*30000UL);
+       sensor_analog = analogRead(SMSensor);
+       moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
+       Serial.print( "Moisture % with Relay ON : " );
+       Serial.println( moisture_percentage );
+       motorElapsed = millis() - motorStart;
+       Serial.print( "motorOnfor : " );
+       Serial.println(motorElapsed);
+     }
+   
+     relayStatus = "OFF";
+     url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
+     while (!client.connected())           
+       client.connect(host, httpsPort);
+     client.printRedir(url, host, googleRedirHost);      
+     digitalWrite (Relay, LOW);
+     delay(5000);
   }
-
-  relayStatus = "OFF";
-  url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
-  while (!client.connected())           
-    client.connect(host, httpsPort);
-  client.printRedir(url, host, googleRedirHost);      
-  digitalWrite (Relay, LOW);
-  delay(5000);
-
+ 
   int systemElapsed = millis() - systemStarted;
-  if (systemElapsed >= 30*60000UL){
-    url = String("/macros/s/") + GScriptId + "/exec?status=Restart" + "&tmp=" + moisture_percentage;
+  if (systemElapsed >= 60*60000UL){
+    url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
     while (!client.connected())           
       client.connect(host, httpsPort);
     client.printRedir(url, host, googleRedirHost);      
