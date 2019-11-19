@@ -7,10 +7,10 @@
 #define SMSensor A0
 #define Relay D1
 
-const long utcOffsetInSeconds = 19800;
-WiFiUDP ntpUDP;
 ESP8266WiFiMulti wifiMulti;
+WiFiUDP ntpUDP;
 
+const long utcOffsetInSeconds = 19800;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 const char* host = "script.google.com";
@@ -57,7 +57,7 @@ void loop() {
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
 
   if (moisture_percentage > 96){
-    url = String("/macros/s/") + GScriptId + "/exec?tmp=0&status=Sensor_Failure";
+    url = String("/macros/s/") + GScriptId + "/exec?relay=NA&tmp=0&status=Sensor_Failure";
     while (!client.connected())           
       client.connect(host, httpsPort);
     client.printRedir(url, host, googleRedirHost);      
