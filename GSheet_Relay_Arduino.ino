@@ -15,7 +15,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
-const char *GScriptId = "AKfycbyt2xy6KtumV7Eu8ODkkto4JUWNGJ6bYU1HQ7RBNdmI7FWw2Vw";
+const char *GScriptId = "";
 const int httpsPort = 443;
 
 //echo | openssl s_client -connect script.google.com:443 |& openssl x509 -fingerprint -noout
