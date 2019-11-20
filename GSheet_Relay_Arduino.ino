@@ -30,6 +30,11 @@ String url;
 float moisture_percentage;
 int sensor_analog;
 int systemStarted = millis();
+
+void blynkConnect()
+{
+  Blynk.begin(auth, "", "");
+}
  
 void setup() {
   Serial.begin(9600);
@@ -51,12 +56,12 @@ void setup() {
   Serial.print("WiFi connected with IP address: ");
   Serial.println(WiFi.localIP());
 
-  Blynk.begin(auth, "", "");
+  blynkConnect();
   Serial.println("Blynk Server Connected...");
 }
 
 void loop() {
-  Blynk.begin(auth, "", "");
+  blynkConnect();
   Serial.println("Blynk Server Connected...");
 
   HTTPSRedirect client(httpsPort);
@@ -76,7 +81,7 @@ void loop() {
       Serial.print( "Step 1 : Retrying to connect Google server..." );
     client.printRedir(url, host, googleRedirHost);      
     timeClient.update();
-    Blynk.begin(auth, "", "");
+    blynkConnect();
     Blynk.notify("Sensor Failure@ " + timeClient.getFormattedTime() + "!!");
   }
  
@@ -107,7 +112,7 @@ void loop() {
        delay(1*30000UL);
        sensor_analog = analogRead(SMSensor);
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-       Blynk.begin(auth, "", "");
+       blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
        Serial.print( "Moisture % with Relay ON : " );
        Serial.println( moisture_percentage );
@@ -117,7 +122,7 @@ void loop() {
      }
    
      relayStatus = "OFF";
-     Blynk.begin(auth, "", "");
+     blynkConnect();
      Blynk.virtualWrite(V1, moisture_percentage);
      timeClient.update();
      Blynk.notify("Watering Plants Done @ " + timeClient.getFormattedTime() + "!!");
@@ -139,7 +144,7 @@ void loop() {
       Serial.print( "Step 1 : Retrying to connect Google server..." );
     client.printRedir(url, host, googleRedirHost);
     timeClient.update();
-    Blynk.begin(auth, "", "");
+    blynkConnect();
     Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
     ESP.restart();
   }
