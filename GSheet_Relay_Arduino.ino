@@ -3,9 +3,13 @@
 #include <ESP8266WiFiMulti.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <BlynkSimpleEsp8266.h>
 
+#define BLYNK_PRINT Serial
 #define SMSensor A0
 #define Relay D1
+
+char auth[] = "";
 
 ESP8266WiFiMulti wifiMulti;
 WiFiUDP ntpUDP;
@@ -44,48 +48,67 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("");
-  Serial.println("WiFi connected with IP address: ");
+  Serial.print("WiFi connected with IP address: ");
   Serial.println(WiFi.localIP());
+
+  Blynk.begin(auth, "", "");
+  Serial.println("Blynk Server Connected...");
 }
 
 void loop() {
+  Blynk.begin(auth, "", "");
+  Serial.println("Blynk Server Connected...");
+
   HTTPSRedirect client(httpsPort);
   timeClient.begin();
-
   client.setInsecure();
+  Serial.println("Connected Insecurely...");
+  
   sensor_analog = analogRead(SMSensor);
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
+  Serial.println("Read sensor data...");
 
+  Blynk.virtualWrite(V1, moisture_percentage);
   if (moisture_percentage > 96){
     url = String("/macros/s/") + GScriptId + "/exec?relay=NA&tmp=0&status=Sensor_Failure";
     while (!client.connected())           
       client.connect(host, httpsPort);
+      Serial.print( "Step 1 : Retrying to connect Google server..." );
     client.printRedir(url, host, googleRedirHost);      
+    timeClient.update();
+    Blynk.begin(auth, "", "");
+    Blynk.notify("Sensor Failure@ " + timeClient.getFormattedTime() + "!!");
   }
  
-  while (moisture_percentage >= 42){
-    delay(8*30000UL);
+  while (moisture_percentage >= 42.0){
+    delay(10*30000UL);
     sensor_analog = analogRead(SMSensor);
     moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
+    Blynk.virtualWrite(V1, moisture_percentage);
     Serial.print( "Moisture % with Relay OFF : " );
     Serial.println( moisture_percentage );
   }
 
   timeClient.update();
-  if (timeClient.getHours() < 16 &&  timeClient.getHours() > 4){
+  if (timeClient.getHours() > 4 && timeClient.getHours() < 16){
      relayStatus = "ON";
+     Blynk.notify("Watering Plants Now @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
+       Serial.print( "Step 2 : Retrying to connect Google server..." );
+       
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, HIGH);
 
      int motorStart = millis();
      int motorElapsed = millis() - motorStart;
      while ((moisture_percentage < 42) and (motorElapsed <= 6*60000UL)){
-       delay(2*30000UL);
+       delay(1*30000UL);
        sensor_analog = analogRead(SMSensor);
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
+       Blynk.begin(auth, "", "");
+       Blynk.virtualWrite(V1, moisture_percentage);
        Serial.print( "Moisture % with Relay ON : " );
        Serial.println( moisture_percentage );
        motorElapsed = millis() - motorStart;
@@ -94,9 +117,15 @@ void loop() {
      }
    
      relayStatus = "OFF";
+     Blynk.begin(auth, "", "");
+     Blynk.virtualWrite(V1, moisture_percentage);
+     timeClient.update();
+     Blynk.notify("Watering Plants Done @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
+       Serial.print( "Step 3 : Retrying to connect Google server..." );
+
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
      delay(5000);
@@ -107,7 +136,13 @@ void loop() {
     url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
     while (!client.connected())           
       client.connect(host, httpsPort);
-    client.printRedir(url, host, googleRedirHost);      
+      Serial.print( "Step 1 : Retrying to connect Google server..." );
+    client.printRedir(url, host, googleRedirHost);
+    timeClient.update();
+    Blynk.begin(auth, "", "");
+    Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
     ESP.restart();
   }
+  Blynk.run(); 
+  delay(5000);
 }
