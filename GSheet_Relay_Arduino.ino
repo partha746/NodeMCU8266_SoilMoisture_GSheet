@@ -115,7 +115,7 @@ void loop() {
     Blynk.virtualWrite(V1, moisture_percentage);
     terminal.print( "Moisture % %s with Relay OFF : ");
     terminal.println( moisture_percentage );
-    if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
+    if (timeClient.getHours() < minTime && timeClient.getHours() > maxTime){
       moisture_percentage = mois_thresh + 1;
     }
   }
