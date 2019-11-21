@@ -57,10 +57,10 @@ void setup() {
   pinMode(SMSensor, INPUT);
 
   terminal.clear();
-  terminal.print("Connecting to wifi: ");
+  Serial.print("Connecting to wifi: ");
   while (wifiMulti.run() != WL_CONNECTED) {
     delay(500);
-    terminal.print(".");
+    Serial.print(".");
   }
   Serial.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
 }
