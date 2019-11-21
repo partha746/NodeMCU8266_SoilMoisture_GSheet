@@ -79,7 +79,6 @@ void reportSensorError(float smReading){
     url = String("/macros/s/") + GScriptId + "/exec?relay=NA&tmp=0&status=Sensor_Failure";
     while (!client.connected())           
       client.connect(host, httpsPort);
-      Serial.print( "Step 1 : Retrying to connect Google server..." );
     client.printRedir(url, host, googleRedirHost);      
     timeClient.update();
     blynkConnect();
@@ -128,7 +127,6 @@ void loop() {
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
-       Serial.print( "Step 2 : Retrying to connect Google server..." );
        
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, HIGH);
@@ -155,7 +153,6 @@ void loop() {
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
-       Serial.print( "Step 3 : Retrying to connect Google server..." );
 
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
@@ -167,7 +164,6 @@ void loop() {
     url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
     while (!client.connected())           
       client.connect(host, httpsPort);
-      Serial.print( "Step 1 : Retrying to connect Google server..." );
     client.printRedir(url, host, googleRedirHost);
     timeClient.update();
     blynkConnect();
