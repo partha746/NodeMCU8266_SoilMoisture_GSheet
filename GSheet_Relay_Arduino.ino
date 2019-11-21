@@ -36,6 +36,7 @@ float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor fai
 int minTime = 4; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 16; //24 Hrs clock time // Time after to stop watering plants
 long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
+long chkNWPOTTimer = 15*60000UL; // 4 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 6*60000UL; // 6 mins {Max watering plants timer}
 long rebootTimer = 4*60*60000UL; // 4 Hrs {Reboot timer}
@@ -117,7 +118,7 @@ void loop() {
   else{
     long counterStart = millis();
     long counterElapsed = millis() - counterStart;
-    while(counterElapsed <= chkNWPTimer){
+    while(counterElapsed <= chkNWPOTTimer){
       counterElapsed = millis() - counterStart;
       delay(30500UL);
     }
