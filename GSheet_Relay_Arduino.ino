@@ -4,13 +4,11 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <BlynkSimpleEsp8266.h>
+#include "wifi_passphrares.h"
 
 #define BLYNK_PRINT Serial
 #define SMSensor A0
 #define Relay D1
-
-char auth[] = "";
-const char *GScriptId = "";
 
 WidgetLED led(V0);
 WidgetTerminal terminal(V1);
@@ -44,14 +42,14 @@ long rebootTimer = 4*60*60000UL; // 4 Hrs {Reboot timer}
 
 void blynkConnect()
 {
-  Blynk.begin(auth, "", "");
+  Blynk.begin(auth, SSID1, WifiPass);
 }
  
 void setup() {
   Serial.begin(9600);
   WiFi.mode(WIFI_STA);
 
-  wifiMulti.addAP("", "");
+  wifiMulti.addAP(SSID1, WifiPass);
   
   pinMode(Relay, OUTPUT);
   pinMode(SMSensor, INPUT);
