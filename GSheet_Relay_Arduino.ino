@@ -123,6 +123,7 @@ void loop() {
   if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
      relayStatus = "ON";
      led.on();
+     blynkConnect();
      Blynk.notify("Watering Plants Now @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
