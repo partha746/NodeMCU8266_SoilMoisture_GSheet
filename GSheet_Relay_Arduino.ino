@@ -113,6 +113,7 @@ void loop() {
       Blynk.virtualWrite(V1, moisture_percentage);
       terminal.print( "Moisture with Relay OFF : ");
       terminal.println( moisture_percentage );
+      terminal.flush();
     }
   }
   else{
@@ -129,6 +130,7 @@ void loop() {
     Blynk.virtualWrite(V1, moisture_percentage);
     terminal.print( "Moisture with Relay OFF : ");
     terminal.println( moisture_percentage );    
+    terminal.flush();
   }
 
   timeClient.update();
@@ -153,6 +155,7 @@ void loop() {
        Blynk.virtualWrite(V1, moisture_percentage);
        terminal.print( "Moisture with Relay ON : ");
        terminal.println( moisture_percentage );
+       terminal.flush();
        motorElapsed = millis() - motorStart;
      }
    
@@ -181,6 +184,5 @@ void loop() {
     Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
     ESP.restart();
   }
-  terminal.flush();
   Blynk.run(); 
 }
