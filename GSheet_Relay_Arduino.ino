@@ -52,12 +52,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
 
   wifiMulti.addAP("", "");
-  wifiMulti.addAP("", "");
   
   pinMode(Relay, OUTPUT);
   pinMode(SMSensor, INPUT);
-
-  led.off();
 
   terminal.clear();
   terminal.print("Connecting to wifi: ");
@@ -65,9 +62,7 @@ void setup() {
     delay(500);
     terminal.print(".");
   }
-  String ipAddr = WiFi.localIP().toString();
-  delay(1000);
-  terminal.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
+  Serial.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
 }
 
 void reportSensorError(float smReading){
@@ -92,19 +87,39 @@ void loop() {
   HTTPSRedirect client(httpsPort);
   timeClient.begin();
   client.setInsecure();
-  terminal.println("Connected Insecurely...");
+  Serial.println("Connected Insecurely...");
+
+  led.off();
   
   sensor_analog = analogRead(SMSensor);
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
 
   reportSensorError(moisture_percentage);
-  
-  while (moisture_percentage >= mois_thresh ){
+
+  timeClient.update();
+  if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
+    while (moisture_percentage >= mois_thresh ){
+      long counterStart = millis();
+      long counterElapsed = millis() - counterStart;
+      while(counterElapsed <= chkNWPTimer){
+        counterElapsed = millis() - counterStart;
+        Serial.println(counterElapsed);
+        delay(30500UL);
+      }
+      sensor_analog = analogRead(SMSensor);
+      moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
+      reportSensorError(moisture_percentage);
+      blynkConnect();
+      Blynk.virtualWrite(V1, moisture_percentage);
+      terminal.print( "Moisture with Relay OFF : ");
+      terminal.println( moisture_percentage );
+    }
+  }
+  else{
     long counterStart = millis();
     long counterElapsed = millis() - counterStart;
     while(counterElapsed <= chkNWPTimer){
       counterElapsed = millis() - counterStart;
-      Serial.println(counterElapsed);
       delay(30500UL);
     }
     sensor_analog = analogRead(SMSensor);
@@ -112,23 +127,19 @@ void loop() {
     reportSensorError(moisture_percentage);
     blynkConnect();
     Blynk.virtualWrite(V1, moisture_percentage);
-    terminal.print( "Moisture % %s with Relay OFF : ");
-    terminal.println( moisture_percentage );
-    if (timeClient.getHours() < minTime && timeClient.getHours() > maxTime){
-      moisture_percentage = mois_thresh + 1;
-    }
+    terminal.print( "Moisture with Relay OFF : ");
+    terminal.println( moisture_percentage );    
   }
 
   timeClient.update();
   if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
      relayStatus = "ON";
-     led.on();
      blynkConnect();
+     led.on();
      Blynk.notify("Watering Plants Now @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
-       
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, HIGH);
 
@@ -140,7 +151,7 @@ void loop() {
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
        blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
-       terminal.print( "Moisture % %s with Relay ON : ");
+       terminal.print( "Moisture with Relay ON : ");
        terminal.println( moisture_percentage );
        motorElapsed = millis() - motorStart;
      }
@@ -154,7 +165,6 @@ void loop() {
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
-
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
      delay(5000);
@@ -173,5 +183,4 @@ void loop() {
   }
   terminal.flush();
   Blynk.run(); 
-  delay(5000);
 }
