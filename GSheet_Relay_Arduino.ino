@@ -23,9 +23,6 @@ const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
 const int httpsPort = 443;
 
-//echo | openssl s_client -connect script.google.com:443 |& openssl x509 -fingerprint -noout | cut -d ":" -f2- | tr ":" " "
-//const char* fingerprint = "37 83 9B 99 A1 C9 7D 64 9B 3D 93 1F F0 55 EB A5 F1 49 34 34";
-
 String relayStatus;
 String url;
 float moisture_percentage;
