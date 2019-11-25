@@ -58,6 +58,7 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("");
   Serial.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
 
   blynkConnect();
