@@ -36,7 +36,7 @@ long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 4 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 6*60000UL; // 6 mins {Max watering plants timer}
-long rebootTimer = 4*60*60000UL; // 4 Hrs {Reboot timer}
+long rebootTimer = 1*60*60000UL; // 4 Hrs {Reboot timer}
 
 void blynkConnect()
 {
@@ -59,6 +59,9 @@ void setup() {
     Serial.print(".");
   }
   Serial.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
+
+  blynkConnect();
+  Blynk.syncVirtual(V3);
 }
 
 void reportSensorError(float smReading){
@@ -77,7 +80,31 @@ void reportSensorError(float smReading){
   }
 }
 
+BLYNK_WRITE(V3){
+  if (param.asInt() == 1) { 
+    ESP.restart();
+  }
+}
+
+void ESPReboot(){
+  HTTPSRedirect client(httpsPort);
+  timeClient.begin();
+  client.setInsecure();
+  int systemElapsed = millis() - systemStarted;
+  if (systemElapsed >= rebootTimer){
+    url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
+    while (!client.connected())           
+      client.connect(host, httpsPort);
+    client.printRedir(url, host, googleRedirHost);
+    timeClient.update();
+    blynkConnect();
+    Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
+    ESP.restart();
+  }
+}
+
 void loop() {
+  Blynk.run(); 
   blynkConnect();
   
   HTTPSRedirect client(httpsPort);
@@ -98,9 +125,14 @@ void loop() {
       long counterStart = millis();
       long counterElapsed = millis() - counterStart;
       while(counterElapsed <= chkNWPTimer){
+        blynkConnect();
+        Blynk.run();
+        Blynk.syncVirtual(V3);
         counterElapsed = millis() - counterStart;
+        Serial.print("In Time not watering : ");
         Serial.println(counterElapsed);
         delay(30500UL);
+        ESPReboot();
       }
       sensor_analog = analogRead(SMSensor);
       moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
@@ -118,6 +150,7 @@ void loop() {
     while(counterElapsed <= chkNWPOTTimer){
       counterElapsed = millis() - counterStart;
       delay(30500UL);
+      ESPReboot();
     }
     sensor_analog = analogRead(SMSensor);
     moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
@@ -166,19 +199,7 @@ void loop() {
        client.connect(host, httpsPort);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
-     delay(5000);
-  }
- 
-  int systemElapsed = millis() - systemStarted;
-  if (systemElapsed >= rebootTimer){
-    url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
-    while (!client.connected())           
-      client.connect(host, httpsPort);
-    client.printRedir(url, host, googleRedirHost);
-    timeClient.update();
-    blynkConnect();
-    Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
-    ESP.restart();
+     delay(10*60000); //10 Mins Delay between watering plants if default maxWPTimer not enough
   }
   Blynk.run(); 
 }
