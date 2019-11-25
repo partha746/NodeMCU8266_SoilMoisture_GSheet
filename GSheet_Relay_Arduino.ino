@@ -4,7 +4,7 @@
 #include <WiFiUdp.h>
 #include <NTPClient.h>
 #include <BlynkSimpleEsp8266.h>
-#include "wifi_passphrares.h"
+#include "wifi_passphrares.h" //includes variables SSID1, WifiPass, auth[] & *GScriptId
 
 #define BLYNK_PRINT Serial
 #define SMSensor A0
