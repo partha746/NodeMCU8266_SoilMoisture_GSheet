@@ -30,7 +30,7 @@ int sensor_analog;
 int systemStarted = millis();
 float mois_thresh = 40.0; // Moisture below this should run motor
 float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor failure
-int minTime = 4; //24 Hrs clock time // Time after to start watering plants
+int minTime = 3; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 16; //24 Hrs clock time // Time after to stop watering plants
 long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 4 mins {Check not watering plants timer out of time Limit}
@@ -64,7 +64,7 @@ void setup() {
   Blynk.syncVirtual(V3);
 }
 
-void reportSensorError(float smReading){
+int reportSensorError(float smReading){
   HTTPSRedirect client(httpsPort);
   timeClient.begin();
   client.setInsecure();
@@ -78,6 +78,8 @@ void reportSensorError(float smReading){
     blynkConnect();
     Blynk.notify("Sensor Failure@ " + timeClient.getFormattedTime() + "!!");
   }
+
+  return 1;
 }
 
 BLYNK_WRITE(V3){
@@ -110,14 +112,12 @@ void loop() {
   HTTPSRedirect client(httpsPort);
   timeClient.begin();
   client.setInsecure();
-  Serial.println("Connected Insecurely...");
+//  Serial.println("Connected Insecurely...");
 
   led.off();
   
   sensor_analog = analogRead(SMSensor);
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-
-  reportSensorError(moisture_percentage);
 
   timeClient.update();
   if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
@@ -129,19 +129,20 @@ void loop() {
         Blynk.run();
         Blynk.syncVirtual(V3);
         counterElapsed = millis() - counterStart;
-        Serial.print("In Time not watering : ");
-        Serial.println(counterElapsed);
+//        Serial.print("In Time not watering : ");
+//        Serial.println(counterElapsed);
         delay(30500UL);
         ESPReboot();
       }
       sensor_analog = analogRead(SMSensor);
       moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-      reportSensorError(moisture_percentage);
-      blynkConnect();
-      Blynk.virtualWrite(V1, moisture_percentage);
-      terminal.print( "Moisture with Relay OFF : ");
-      terminal.println( moisture_percentage );
-      terminal.flush();
+      if (!reportSensorError(moisture_percentage)){
+        blynkConnect();
+        Blynk.virtualWrite(V1, moisture_percentage);        
+      }
+//      terminal.print( "Moisture with Relay OFF : ");
+//      terminal.println( moisture_percentage );
+//      terminal.flush();
     }
   }
   else{
@@ -154,12 +155,13 @@ void loop() {
     }
     sensor_analog = analogRead(SMSensor);
     moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-    reportSensorError(moisture_percentage);
-    blynkConnect();
-    Blynk.virtualWrite(V1, moisture_percentage);
-    terminal.print( "Moisture with Relay OFF : ");
-    terminal.println( moisture_percentage );    
-    terminal.flush();
+    if (!reportSensorError(moisture_percentage)){
+      blynkConnect();
+      Blynk.virtualWrite(V1, moisture_percentage);        
+    }
+//    terminal.print( "Moisture with Relay OFF : ");
+//    terminal.println( moisture_percentage );    
+//    terminal.flush();
   }
 
   timeClient.update();
@@ -182,9 +184,9 @@ void loop() {
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
        blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
-       terminal.print( "Moisture with Relay ON : ");
-       terminal.println( moisture_percentage );
-       terminal.flush();
+//       terminal.print( "Moisture with Relay ON : ");
+//       terminal.println( moisture_percentage );
+//       terminal.flush();
        motorElapsed = millis() - motorStart;
      }
    
