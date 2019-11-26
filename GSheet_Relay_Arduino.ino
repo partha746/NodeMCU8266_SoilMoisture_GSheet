@@ -28,15 +28,16 @@ String url;
 float moisture_percentage;
 int sensor_analog;
 int systemStarted = millis();
-float mois_thresh = 40.0; // Moisture below this should run motor
+float mois_thresh = 35.0; // Moisture below this should run motor
 float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor failure
 int minTime = 3; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 16; //24 Hrs clock time // Time after to stop watering plants
 long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
-long maxWPTimer = 6*60000UL; // 6 mins {Max watering plants timer}
+long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
 long rebootTimer = 1*60*60000UL; // 1 Hrs {Reboot timer}
+long reWaterTimer = 1*60*60000UL; // 1 Hrs {Rewater once watered}
 
 void blynkConnect()
 {
@@ -188,7 +189,7 @@ void loop() {
        client.connect(host, httpsPort);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
-     delay(15*60000); //15 Mins Delay between watering plants if default maxWPTimer not enough
+     delay(reWaterTimer); //15 Mins Delay between watering plants if default maxWPTimer not enough
   }
   Blynk.run(); 
 }
