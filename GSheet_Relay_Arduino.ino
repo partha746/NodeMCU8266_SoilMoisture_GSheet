@@ -37,7 +37,7 @@ long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
 long rebootTimer = 1*60*60000UL; // 1 Hrs {NodeMCU soft Reboot timer}
-long reWaterTimer = 1*60*60000UL; // 1 Hrs {Rewater once watered}
+long reWaterTimer = 2*60*60000UL; // 2 Hrs {Rewater once watered}
 
 void blynkConnect()
 {
@@ -189,7 +189,7 @@ void loop() {
        client.connect(host, httpsPort);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
-     delay(reWaterTimer); //15 Mins Delay between watering plants if default maxWPTimer not enough
+     delay(reWaterTimer);
   }
   Blynk.run(); 
 }
