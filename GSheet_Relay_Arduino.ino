@@ -33,10 +33,10 @@ float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor fai
 int minTime = 3; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 16; //24 Hrs clock time // Time after to stop watering plants
 long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
-long chkNWPOTTimer = 15*60000UL; // 4 mins {Check not watering plants timer out of time Limit}
+long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 6*60000UL; // 6 mins {Max watering plants timer}
-long rebootTimer = 1*60*60000UL; // 4 Hrs {Reboot timer}
+long rebootTimer = 1*60*60000UL; // 1 Hrs {Reboot timer}
 
 void blynkConnect()
 {
@@ -52,17 +52,13 @@ void setup() {
   pinMode(Relay, OUTPUT);
   pinMode(SMSensor, INPUT);
 
-  terminal.clear();
-  Serial.print("Connecting to wifi: ");
+  Serial.println("Connecting to wifi: ");
   while (wifiMulti.run() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("");
   Serial.printf("Connected to SSID: %s & IP address: %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
-
-  blynkConnect();
-  Blynk.syncVirtual(V3);
 }
 
 int reportSensorError(float smReading){
@@ -78,14 +74,10 @@ int reportSensorError(float smReading){
     timeClient.update();
     blynkConnect();
     Blynk.notify("Sensor Failure@ " + timeClient.getFormattedTime() + "!!");
+    return 1;
   }
-
-  return 1;
-}
-
-BLYNK_WRITE(V3){
-  if (param.asInt() == 1) { 
-    ESP.restart();
+  else{
+    return 0;
   }
 }
 
@@ -107,13 +99,12 @@ void ESPReboot(){
 }
 
 void loop() {
-  Blynk.run(); 
   blynkConnect();
+  Blynk.run(); 
   
   HTTPSRedirect client(httpsPort);
   timeClient.begin();
   client.setInsecure();
-//  Serial.println("Connected Insecurely...");
 
   led.off();
   
@@ -127,23 +118,19 @@ void loop() {
       long counterElapsed = millis() - counterStart;
       while(counterElapsed <= chkNWPTimer){
         blynkConnect();
-        Blynk.run();
-        Blynk.syncVirtual(V3);
         counterElapsed = millis() - counterStart;
-//        Serial.print("In Time not watering : ");
-//        Serial.println(counterElapsed);
         delay(30500UL);
         ESPReboot();
       }
       sensor_analog = analogRead(SMSensor);
       moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-      if (!reportSensorError(moisture_percentage)){
+      reportSensorError(moisture_percentage);
+      if (moisture_percentage < sensorErrorThresh){
         blynkConnect();
-        Blynk.virtualWrite(V1, moisture_percentage);        
+        Blynk.virtualWrite(V1, moisture_percentage);
+        delay(2000);
+        Blynk.virtualWrite(V2, moisture_percentage);
       }
-//      terminal.print( "Moisture with Relay OFF : ");
-//      terminal.println( moisture_percentage );
-//      terminal.flush();
     }
   }
   else{
@@ -156,13 +143,13 @@ void loop() {
     }
     sensor_analog = analogRead(SMSensor);
     moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
-    if (!reportSensorError(moisture_percentage)){
+    reportSensorError(moisture_percentage);
+    if (moisture_percentage < sensorErrorThresh){
       blynkConnect();
-      Blynk.virtualWrite(V1, moisture_percentage);        
+      Blynk.virtualWrite(V1, moisture_percentage);
+      delay(2000);
+      Blynk.virtualWrite(V2, moisture_percentage);
     }
-//    terminal.print( "Moisture with Relay OFF : ");
-//    terminal.println( moisture_percentage );    
-//    terminal.flush();
   }
 
   timeClient.update();
@@ -185,9 +172,7 @@ void loop() {
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
        blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
-//       terminal.print( "Moisture with Relay ON : ");
-//       terminal.println( moisture_percentage );
-//       terminal.flush();
+       Blynk.virtualWrite(V2, moisture_percentage);
        motorElapsed = millis() - motorStart;
      }
    
@@ -195,6 +180,7 @@ void loop() {
      led.off();
      blynkConnect();
      Blynk.virtualWrite(V1, moisture_percentage);
+     Blynk.virtualWrite(V2, moisture_percentage);
      timeClient.update();
      Blynk.notify("Watering Plants Done @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
@@ -202,7 +188,7 @@ void loop() {
        client.connect(host, httpsPort);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
-     delay(10*60000); //10 Mins Delay between watering plants if default maxWPTimer not enough
+     delay(15*60000); //15 Mins Delay between watering plants if default maxWPTimer not enough
   }
   Blynk.run(); 
 }
