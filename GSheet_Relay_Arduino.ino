@@ -37,7 +37,7 @@ long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
 long rebootTimer = 1*60*60000UL; // 1 Hrs {NodeMCU soft Reboot timer}
-long reWaterTimer = 2*60*60000UL; // 2 Hrs {Rewater once watered}
+long reWaterTimer = 1*60*60000UL; // 1 Hrs {Rewater once watered}
 
 void blynkConnect()
 {
@@ -91,8 +91,10 @@ void ESPReboot(){
     url = String("/macros/s/") + GScriptId + "/exec?relay=NA&status=Restart" + "&tmp=" + moisture_percentage;
     while (!client.connected())           
       client.connect(host, httpsPort);
+    delay(2000);
     client.printRedir(url, host, googleRedirHost);
     timeClient.update();
+    delay(2000);
     blynkConnect();
     Blynk.notify("Restarting NODEMCU NOW @ " + timeClient.getFormattedTime() + "!!");
     ESP.restart();
@@ -162,6 +164,7 @@ void loop() {
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
+     delay(2000);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, HIGH);
 
@@ -173,6 +176,7 @@ void loop() {
        moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
        blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
+       delay(2000);
        Blynk.virtualWrite(V2, moisture_percentage);
        motorElapsed = millis() - motorStart;
      }
@@ -181,12 +185,14 @@ void loop() {
      led.off();
      blynkConnect();
      Blynk.virtualWrite(V1, moisture_percentage);
+     delay(2000);
      Blynk.virtualWrite(V2, moisture_percentage);
      timeClient.update();
      Blynk.notify("Watering Plants Done @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
      while (!client.connected())           
        client.connect(host, httpsPort);
+     delay(2000);
      client.printRedir(url, host, googleRedirHost);      
      digitalWrite (Relay, LOW);
      delay(reWaterTimer);
