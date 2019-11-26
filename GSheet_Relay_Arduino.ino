@@ -36,7 +36,7 @@ long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
-long rebootTimer = 1*60*60000UL; // 1 Hrs {Reboot timer}
+long rebootTimer = 1*60*60000UL; // 1 Hrs {NodeMCU soft Reboot timer}
 long reWaterTimer = 1*60*60000UL; // 1 Hrs {Rewater once watered}
 
 void blynkConnect()
