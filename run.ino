@@ -30,14 +30,14 @@ int sensor_analog;
 int systemStarted = millis();
 float mois_thresh = 35.0; // Moisture below this should run motor
 float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor failure
-int minTime = 3; //24 Hrs clock time // Time after to start watering plants
-int maxTime = 16; //24 Hrs clock time // Time after to stop watering plants
+int minTime = 8; //24 Hrs clock time // Time after to start watering plants
+int maxTime = 12; //24 Hrs clock time // Time after to stop watering plants
 long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
 long rebootTimer = 1*60*60000UL; // 1 Hrs {NodeMCU soft Reboot timer}
-long reWaterTimer = 3*60*30000UL; // 1 Hrs {Rewater once watered}
+long reWaterTimer = 1*60*30000UL; // 30 Mins {Rewater once watered}
 
 void blynkConnect()
 {
@@ -115,7 +115,7 @@ void loop() {
   moisture_percentage = ( 100 - ( (sensor_analog/1023.00) * 100 ) );
 
   timeClient.update();
-  if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
+  if (timeClient.getHours() >= minTime && timeClient.getHours() <= maxTime){
     while (moisture_percentage >= mois_thresh ){
       long counterStart = millis();
       long counterElapsed = millis() - counterStart;
@@ -156,7 +156,7 @@ void loop() {
   }
 
   timeClient.update();
-  if (timeClient.getHours() > minTime && timeClient.getHours() < maxTime){
+  if (timeClient.getHours() >= minTime && timeClient.getHours() <= maxTime){
      relayStatus = "ON";
      blynkConnect();
      led.on();
