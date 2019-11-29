@@ -41,7 +41,9 @@ long reWaterTimer = 1*60*30000UL; // 30 Mins {Rewater once watered}
 
 void blynkConnect()
 {
-  Blynk.begin(auth, SSID1, WifiPass);
+  if (!Blynk.connected()){
+    Blynk.begin(auth, SSID1, WifiPass);  
+  }
 }
  
 void setup() {
