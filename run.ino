@@ -28,22 +28,20 @@ String url;
 float moisture_percentage;
 int sensor_analog;
 int systemStarted = millis();
-float mois_thresh = 35.0; // Moisture below this should run motor
-float sensorErrorThresh = 96.0; // Moisture reading more than this is sensor failure
-int minTime = 8; //24 Hrs clock time // Time after to start watering plants
+float mois_thresh = 16.0; // Moisture below this should run motor
+float sensorErrorThresh = 90.0; // Moisture reading more than this is sensor failure
+int minTime = 7; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 12; //24 Hrs clock time // Time after to stop watering plants
-long chkNWPTimer = 8*30000UL; // 4 mins {Check not watering plants timer}
+long chkNWPTimer = 5*60000UL; // 5 mins {Check not watering plants timer}
 long chkNWPOTTimer = 15*60000UL; // 15 mins {Check not watering plants timer out of time Limit}
 long chkWPTimer = 1*30000UL; // 30 secs {Check watering plants timer}
 long maxWPTimer = 4*60000UL; // 4 mins {Max watering plants timer}
+long reWaterTimer = 30*60000UL; // 30 Mins {Rewater once watered}
 long rebootTimer = 1*60*60000UL; // 1 Hrs {NodeMCU soft Reboot timer}
-long reWaterTimer = 1*60*30000UL; // 30 Mins {Rewater once watered}
 
 void blynkConnect()
 {
-  if (!Blynk.connected()){
-    Blynk.begin(auth, SSID1, WifiPass);  
-  }
+  Blynk.begin(auth, SSID1, WifiPass);
 }
  
 void setup() {
@@ -123,8 +121,10 @@ void loop() {
       long counterElapsed = millis() - counterStart;
       while(counterElapsed <= chkNWPTimer){
         blynkConnect();
-        counterElapsed = millis() - counterStart;
         delay(30500UL);
+        counterElapsed = millis() - counterStart;
+        Serial.print("Time Elapsed ON Time: ");
+        Serial.println(counterElapsed);
         ESPReboot();
       }
       sensor_analog = analogRead(SMSensor);
@@ -142,8 +142,10 @@ void loop() {
     long counterStart = millis();
     long counterElapsed = millis() - counterStart;
     while(counterElapsed <= chkNWPOTTimer){
-      counterElapsed = millis() - counterStart;
       delay(30500UL);
+      counterElapsed = millis() - counterStart;
+      Serial.print("Time Elapsed OFF Time: ");
+      Serial.println(counterElapsed);
       ESPReboot();
     }
     sensor_analog = analogRead(SMSensor);
