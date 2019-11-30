@@ -1,4 +1,3 @@
-#include <ESP8266WiFi.h>
 #include "HTTPSRedirect.h"
 #include <ESP8266WiFiMulti.h>
 #include <WiFiUdp.h>
@@ -6,9 +5,9 @@
 #include <BlynkSimpleEsp8266.h>
 #include "wifi_passphrares.h" //includes variables SSID1, WifiPass, auth[] & *GScriptId
 
-#define BLYNK_PRINT Serial
 #define SMSensor A0
 #define Relay D1
+#define LED D0
 
 WidgetLED led(V0);
 WidgetTerminal terminal(V1);
@@ -28,7 +27,7 @@ String url;
 float moisture_percentage;
 int sensor_analog;
 int systemStarted = millis();
-float mois_thresh = 16.0; // Moisture below this should run motor
+float mois_thresh = 21.0; // Moisture below this should run motor
 float sensorErrorThresh = 90.0; // Moisture reading more than this is sensor failure
 int minTime = 7; //24 Hrs clock time // Time after to start watering plants
 int maxTime = 12; //24 Hrs clock time // Time after to stop watering plants
@@ -45,6 +44,9 @@ void blynkConnect()
 }
  
 void setup() {
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
+
   Serial.begin(9600);
   WiFi.mode(WIFI_STA);
 
@@ -134,7 +136,7 @@ void loop() {
         blynkConnect();
         Blynk.virtualWrite(V1, moisture_percentage);
         delay(2000);
-        Blynk.virtualWrite(V2, moisture_percentage);
+        Blynk.virtualWrite(V2, timeClient.getFormattedTime());
       }
     }
   }
@@ -155,7 +157,7 @@ void loop() {
       blynkConnect();
       Blynk.virtualWrite(V1, moisture_percentage);
       delay(2000);
-      Blynk.virtualWrite(V2, moisture_percentage);
+      Blynk.virtualWrite(V2, timeClient.getFormattedTime());
     }
   }
 
@@ -181,7 +183,7 @@ void loop() {
        blynkConnect();
        Blynk.virtualWrite(V1, moisture_percentage);
        delay(2000);
-       Blynk.virtualWrite(V2, moisture_percentage);
+       Blynk.virtualWrite(V2, timeClient.getFormattedTime());
        motorElapsed = millis() - motorStart;
      }
    
@@ -190,7 +192,7 @@ void loop() {
      blynkConnect();
      Blynk.virtualWrite(V1, moisture_percentage);
      delay(2000);
-     Blynk.virtualWrite(V2, moisture_percentage);
+     Blynk.virtualWrite(V2, timeClient.getFormattedTime());
      timeClient.update();
      Blynk.notify("Watering Plants Done @ " + timeClient.getFormattedTime() + "!!");
      url = String("/macros/s/") + GScriptId + "/exec?tmp=" + moisture_percentage + "&relay=" + relayStatus;
